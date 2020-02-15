@@ -1,23 +1,8 @@
-import os
-
 from flask import Flask, render_template, g, request
-import sqlite3
 from datetime import datetime
+from database import connect_db, get_db
 
 app = Flask(__name__)
-
-
-def connect_db():
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "food_log.db")
-    sql = sqlite3.connect(db_path)
-    sql.row_factory = sqlite3.Row
-    return sql
-
-
-def get_db():
-    if not hasattr(g, 'sqlite_db'):
-        g.sqlite_db = connect_db()
-    return g.sqlite_db
 
 
 @app.teardown_appcontext
@@ -40,7 +25,11 @@ def index():
         db.commit()
 
     cur = db.execute(
-        'select log_date.entry_date, sum(food.protein) as protein, sum(food.carbohydrates) as carbohydrates, sum(food.fat) as fat, sum(food.calories) as calories from log_date join food_date on food_date.log_date_id = log_date.id join food on food.id = food_date.food_id group by log_date.id order by log_date.entry_date desc')
+        '''select log_date.entry_date, sum(food.protein) as protein, sum(food.carbohydrates) as carbohydrates, sum(food.fat) as fat, sum(food.calories) as calories 
+            from log_date 
+            left join food_date on food_date.log_date_id = log_date.id 
+            left join food on food.id = food_date.food_id 
+            group by log_date.id order by log_date.entry_date desc''')
     results = cur.fetchall()
 
     date_results = []
